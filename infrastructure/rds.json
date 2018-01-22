@@ -62,6 +62,11 @@
       "MinValue": "5",
       "MaxValue": "1024",
       "ConstraintDescription" : "must be between 5 and 1024Gb."
+    },
+
+    "ECSSecurityGroupID" : {
+      "Type" : "String",
+      "Description" : "Security group id of your existing ECS cluster security group"
     }
   },
 
@@ -96,7 +101,7 @@
         "MasterUsername" : { "Ref" : "DBUsername" } ,
         "MasterUserPassword" : { "Ref" : "DBPassword" },
         "DBSubnetGroupName" : { "Ref" : "MyDBSubnetGroup" },
-        "VPCSecurityGroups" : [ { "Ref" : "myVPCSecurityGroup" }  ]
+        "DBSecurityGroups" : { "Ref" : "ECSSecurityGroupID" }
       }
     }
   },
