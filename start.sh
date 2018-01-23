@@ -1,9 +1,10 @@
 #!/bin/sh
 # create related stuff
 
-STACK1=test-ecs-15
-STACK2=test-ecs-15-springboot1
-STACK3=test-ecs-15-springboot2
+STACK1=$1
+STACK2="$STACK1"-springboot1
+STACK3="$STACK1"-springboot2
+STACK4="$STACK1"-rds
 REPO=~/Desktop/Projects/Github/ecs-refarch-cloudformation
 URL=https://s3.amazonaws.com/dougtoppin-cloudformation/ecs-refarch-cloudformation/master.yaml
 
@@ -11,10 +12,10 @@ PROFILE=dtoppin-01
 
 
 usage() {
-    echo "Usage: $0 stack|boot1|boot2|rds"
+    echo "Usage: $0 stackname stack|boot1|boot2|rds"
 }
 
-if test $# -ne 1
+if test $# -ne 2
 then
     usage
     exit 1
@@ -29,7 +30,7 @@ VPCSTACKNAME=`aws --profile $PROFILE cloudformation list-stacks --stack-status-f
 VPC=`aws --profile $PROFILE cloudformation describe-stacks --stack-name $VPCSTACKNAME --query 'Stacks[].Outputs[?OutputKey==\`VPC\`].OutputValue' --output text`
 SUBNETS=`aws --profile $PROFILE cloudformation describe-stacks --stack-name $VPCSTACKNAME --query 'Stacks[].Outputs[?OutputKey==\`PrivateSubnets\`].OutputValue' --output text`
 
-case $1 in
+case $2 in
     stack)
         # create base stack
         aws --profile $PROFILE cloudformation create-stack --stack-name $STACK1  --template-url $URL --capabilities CAPABILITY_NAMED_IAM
@@ -43,7 +44,7 @@ case $1 in
        aws --profile $PROFILE cloudformation create-stack --stack-name $STACK3 --template-url https://s3.amazonaws.com/dougtoppin-cloudformation/ecs-refarch-cloudformation/services/springboot-service2/service.yaml --parameters ParameterKey=DesiredCount,ParameterValue=2 ParameterKey=VPC,ParameterValue=$VPC ParameterKey=Path,ParameterValue=/springboot2 ParameterKey=Listener,ParameterValue=$ALBLISTENER ParameterKey=Cluster,ParameterValue=$STACK1 --capabilities CAPABILITY_NAMED_IAM
         ;;
     rds)
-       aws --profile $PROFILE cloudformation create-stack --stack-name "$STACK1"-rds --template-url https://s3.amazonaws.com/dougtoppin-cloudformation/ecs-refarch-cloudformation/infrastructure/rds.json --parameters ParameterKey=Subnets,ParameterValue=\"$SUBNETS\" ParameterKey=VpcId,ParameterValue=$VPC
+       aws --profile $PROFILE cloudformation create-stack --stack-name $STACK4 --template-url https://s3.amazonaws.com/dougtoppin-cloudformation/ecs-refarch-cloudformation/infrastructure/rds.json --parameters ParameterKey=Subnets,ParameterValue=\"$SUBNETS\" ParameterKey=VpcId,ParameterValue=$VPC
         ;;
     test)
         echo "ALBSTACKNAME=$ALBSTACKNAME"
