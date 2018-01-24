@@ -12,7 +12,7 @@ PROFILE=dtoppin-01
 
 
 usage() {
-    echo "Usage: $0 stackname stack|boot1|boot2|rds"
+    echo "Usage: $0 stackname stack|boot1|boot2|rds|test|check"
 }
 
 if test $# -ne 2
@@ -34,26 +34,36 @@ setNames() {
 
 case $2 in
     stack)
+        echo "creating stack $STACK1"
         # create base stack
         aws --profile $PROFILE cloudformation create-stack --stack-name $STACK1  --template-url $URL --capabilities CAPABILITY_NAMED_IAM
         ;;
     boot1)
+        echo "deploying springboot1"
         setNames
 
        # create springboot stack
        aws --profile $PROFILE cloudformation create-stack --stack-name $STACK2 --template-url https://s3.amazonaws.com/dougtoppin-cloudformation/ecs-refarch-cloudformation/services/springboot-service1/service.yaml --parameters ParameterKey=DesiredCount,ParameterValue=2 ParameterKey=VPC,ParameterValue=$VPC ParameterKey=Path,ParameterValue=/springboot1 ParameterKey=Listener,ParameterValue=$ALBLISTENER ParameterKey=Cluster,ParameterValue=$STACK1 --capabilities CAPABILITY_NAMED_IAM
         ;;
     boot2)
+        echo "deploying springboot2"
         setNames
 
        # create springboot stack
        aws --profile $PROFILE cloudformation create-stack --stack-name $STACK3 --template-url https://s3.amazonaws.com/dougtoppin-cloudformation/ecs-refarch-cloudformation/services/springboot-service2/service.yaml --parameters ParameterKey=DesiredCount,ParameterValue=2 ParameterKey=VPC,ParameterValue=$VPC ParameterKey=Path,ParameterValue=/springboot2 ParameterKey=Listener,ParameterValue=$ALBLISTENER ParameterKey=Cluster,ParameterValue=$STACK1 --capabilities CAPABILITY_NAMED_IAM
         ;;
     rds)
+        echo "deploying RDS"
+
         setNames
 
        aws --profile $PROFILE cloudformation create-stack --stack-name $STACK4 --template-url https://s3.amazonaws.com/dougtoppin-cloudformation/ecs-refarch-cloudformation/infrastructure/rds.json --parameters ParameterKey=Subnets,ParameterValue=\"$SUBNETS\" ParameterKey=VpcId,ParameterValue=$VPC
         ;;
+    check)
+        echo "error checking templates"
+        docker run -it --rm -v $(pwd):/opt/src ruby  bash -c "gem install cfn-nag; cfn_nag_scan --input-path /opt/src/"
+        ;;
+
     test)
         setNames
 
